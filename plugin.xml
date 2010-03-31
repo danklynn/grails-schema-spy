@@ -1,0 +1,20 @@
+<plugin name='schema-spy' version='0.1' grailsVersion='1.2.0 &gt; *'>
+  <author>Dan Lynn</author>
+  <authorEmail>dan@prax.is</authorEmail>
+  <title>Grails SchemaSpy Plugin</title>
+  <description>\
+Provides database schema visualization for your Grails app using SchemaSpy
+</description>
+  <documentation>http://grails.org/plugin/schemaspy</documentation>
+  <resources>
+    <resource>BuildConfig</resource>
+    <resource>DataSource</resource>
+    <resource>UrlMappings</resource>
+  </resources>
+  <dependencies>
+    <resolvers>
+      <resolver type='grailsPlugins' name='grailsPlugins' />
+    </resolvers>
+  </dependencies>
+  <behavior />
+</plugin>
