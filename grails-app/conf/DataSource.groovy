@@ -13,8 +13,11 @@ hibernate {
 environments {
 	development {
 		dataSource {
-			dbCreate = "create-drop" // one of 'create', 'create-drop','update'
-			url = "jdbc:hsqldb:mem:devDB"
+            driverClassName = "com.mysql.jdbc.Driver"
+            dbCreate = "update" // one of 'create', 'create-drop','update'
+            username = "schemaspy"
+            password = "schemaspy"
+            url = "jdbc:mysql://127.0.0.1/schemaspy"
 		}
 	}
 	test {

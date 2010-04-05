@@ -1,6 +1,8 @@
 package org.codehaus.groovy.grails.plugins.schemaspy;
 
 import org.apache.tools.ant.taskdefs.Java
+import org.apache.tools.ant.types.Path
+import org.apache.tools.ant.BuildException
 
 public class SchemaSpyTask extends Java {
     private List explicitArgs = []
@@ -14,33 +16,38 @@ public class SchemaSpyTask extends Java {
     @Override
     public void execute() {
         classname = "net.sourceforge.schemaspy.Main"
-        createArg().setFile(getSchemaSpyBinFile());
-        getCommandLine().createArgument().setLine("${args} ${explicitArgs.join(' ')}");
+        setClasspath(getSchemaSpyClasspath())
+        
+        getCommandLine().createArgument().setLine("${explicitArgs.join(' ')} ${args}");
 
         println "Executing: ${getCommandLine()}"
         super.execute()
     }
 
-    void setSchema(String value) {args << "-s ${value}"}
-    void setType(String value) {args << "-t ${value}"}
-    void setUsername(String value) {args << "-u ${value}"}
-    void setPassword(String value) {args << "-p ${value}"}
+    Path getSchemaSpyClasspath() {
+        def schemaSpyClasspath = getProject().getReference("schemaspy.classpath");
+        if(schemaSpyClasspath == null || !(schemaSpyClasspath instanceof Path)) {
+            throw new BuildException("Please create a path with id schemaspy.classpath");
+        }
+        return (Path) schemaSpyClasspath;
+    }
 
+    void setSchema(String value) {explicitArgs << "-s \"${value}\" -db \"${value}\""}
+    void setType(String value) {explicitArgs << "-t \"${value}\""}
+    void setUsername(String value) {explicitArgs << "-u \"${value}\""}
+    void setPassword(String value) {explicitArgs << "-p \"${value}\""}
+    void setTargetDir(String value) {explicitArgs << "-o \"${value}\""}
+    void setHost(String value) {explicitArgs << "-host \"${value}\""}
+
+    /**
+     * Set any additional arguments to the schemaSpy command line
+     * @param args
+     */
     public void setArgs(args) {
         this.args = args
     }
 
     public void setBin(File bin) {
         this.bin = bin
-    }
-
-    private File getSchemaSpyBinFile() {
-        if(bin != null) {
-            return bin;
-        } else if(System.getProperty("schemaSpy.bin") != null) {
-            return new File(System.getProperty("schemaSpy.bin"));
-        } else {
-            return new File("lib/schemaSpy_4.1.1.jar");
-        }
     }
 }

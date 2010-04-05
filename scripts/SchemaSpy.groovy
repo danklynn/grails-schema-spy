@@ -1,28 +1,59 @@
+import net.sourceforge.schemaspy.Config
+
 includeTargets << grailsScript("Init")
 includeTargets << grailsScript("Compile")
 includeTargets << grailsScript("Package")
 
 config = new ConfigObject()
+custonConfigFile = new File('mysql-custom.properties')
 
 target(main: "The description of the script goes here!") {
     depends(classpath, compile)
     rootLoader.addURL(new File("${classesDirPath}").toURL())
     packageApp()
 
-    taskdef (name: 'schema-spy', classname: 'org.codehaus.groovy.grails.plugins.schemaspy.SchemaSpyTask')
+    mkdir(dir: "${basedir}/web-app/schemaspy")
 
+    try {
+        new net.sourceforge.schemaspy.SchemaAnalyzer().analyze(buildSchemaSpyConfig())
+    } finally {
+        custonConfigFile.delete()
+    }    
+}
+
+Config buildSchemaSpyConfig() {
+    def mysqlProps = getMySqlProperties()
+    def c = new net.sourceforge.schemaspy.Config()
 
     Properties p = config.toProperties()
-    def driverClassName = config.dataSource.driverClassName
-    def username = prepareString(p, config.dataSource.username, null)
-    def password = prepareString(p, config.dataSource.password, null)
-    def url = prepareString(p, config.dataSource.url, null)
+    c.user = prepareString(p, config.dataSource.username, null)
+    c.password = prepareString(p, config.dataSource.password, null)
 
-    def dbType = 'hsqldb'
-    def schema = (url =~ /\/(.+)$/)
-    println "Matcher: ${schema}, ${url}"
+    c.outputDir = new File("${basedir}/web-app/schemaspy")
+    c.adsEnabled = false
 
-    'schema-spy'(type: dbType, username: username, password: password, schema: schema)
+    c.dbType = 'mysql-custom'
+    new File('mysql-custom.properties').withOutputStream {OutputStream os ->
+        mysqlProps.store(os, null)
+    }
+    
+    c.schema = '' //(mysqlProps.connectionSpec =~ '/([^/]+)$')[0][1]
+
+    c
+}
+
+Properties getMySqlProperties() {
+    ConfigObject props = new ConfigObject()
+
+    Properties p = config.toProperties()
+
+    props.description = 'MySQL'
+    props.driver = config.dataSource.driverClassName
+    props.driverPath = "${schemaSpyPluginDir}/lib/mysql-connector-java-5.1.10.jar".toString()
+    props.connectionSpec = prepareString(p, config.dataSource.url, null)
+    props.selectTableCommentsSql = "select table_name, table_comment comments from information_schema.tables where table_schema=:schema"
+
+    props.toProperties()
 }
 
 setDefaultTarget(main)
